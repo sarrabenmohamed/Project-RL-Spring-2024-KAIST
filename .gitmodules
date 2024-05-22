@@ -1,0 +1,3 @@
+[submodule "gym-rocketlander"]
+	path = gym-rocketlander
+	url = git@github.com:EmbersArc/gym-rocketlander.git
