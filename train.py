@@ -1,10 +1,9 @@
 import torch.nn as nn
-import os 
-from lunar_lander import LunarLander
-from rocket_lander import RocketLander
+import os
+from environment.rocket_lander import RocketLander
 from stable_baselines3 import A2C
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.vec_env import SubprocVecEnv
+from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv
 
 
 
@@ -19,10 +18,10 @@ MODEL_FILENAME = "test"
 
 if __name__ == "__main__":
     env_kwargs = {
-       # "render_mode" : "human",
+       "render_mode" : "None",
     }
 
-    env = make_vec_env(RocketLander, n_envs=4, vec_env_cls=SubprocVecEnv, env_kwargs=env_kwargs)
+    env = make_vec_env(RocketLander, n_envs=1, vec_env_cls=DummyVecEnv, env_kwargs=env_kwargs)
 
     policy_kwargs = {
         "net_arch" : dict(pi=[64, 64], vf=[64,64]),
@@ -38,5 +37,5 @@ if __name__ == "__main__":
     else:
         model = A2C("MlpPolicy", env, device="cpu", policy_kwargs=policy_kwargs)
 
-    model.learn(total_timesteps=25000)
+    model.learn(total_timesteps=2500)
     model.save(MODEL_FILENAME)

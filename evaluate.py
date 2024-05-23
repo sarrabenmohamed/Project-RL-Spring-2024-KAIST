@@ -1,22 +1,10 @@
 import torch.nn as nn
-from lunar_lander import LunarLander
 from stable_baselines3 import A2C
-
-
-
-
-
-
-
-
-
-
-
-
+from environment.rocket_lander import RocketLander
 
 
 if __name__ == "__main__":
-    env = LunarLander(render_mode="human")
+    env = RocketLander(render_mode="human")
     model = A2C.load("test")
 
     obs, info = env.reset()

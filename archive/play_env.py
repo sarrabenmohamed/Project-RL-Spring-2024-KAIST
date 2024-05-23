@@ -2,8 +2,9 @@ import gymnasium as gym
 from gym.utils.play import PlayableGame, play
 import numpy as np  # For handling observations and actions as arrays
 from lunar_lander import LunarLander
+from rocket_lander import RocketLander
 
-env = LunarLander(render_mode="rgb_array")
+env = RocketLander(render_mode="human")
 env.reset()  # Reset the environment
 
 keys_to_action = {
