@@ -52,10 +52,10 @@ START_HEIGHT = 1000.0
 START_SPEED = 80.0
 
 # ROCKET
-MIN_THROTTLE = 0.4
-GIMBAL_THRESHOLD = 0.4
+MIN_THROTTLE = 0.3
+GIMBAL_THRESHOLD = 0.6
 MAIN_ENGINE_POWER = 1600 * SCALE_S
-SIDE_ENGINE_POWER = 100 / FPS * SCALE_S
+SIDE_ENGINE_POWER = 200 / FPS * SCALE_S
 
 ROCKET_WIDTH = 3.66 * SCALE_S
 ROCKET_HEIGHT = ROCKET_WIDTH / 3.7 * 47.9
@@ -127,6 +127,7 @@ class RocketLander(gym.Env):
         self.engine = None
         self.ship = None
         self.legs = []
+        self.fuel_used = 0
 
         high = np.array([1, 1, 1, 1, 1, 1, 1, np.inf, np.inf, np.inf], dtype=np.float32)
         low = -high
@@ -294,6 +295,8 @@ class RocketLander(gym.Env):
 
         self.lander.angularVelocity = (1 + INITIAL_RANDOM) * np.random.uniform(-1, 1)
 
+        self.fuel_used = 0
+
         self.drawlist = self.legs + [self.water] + [self.ship] + self.containers + [self.lander]
 
         if CONTINUOUS:
@@ -376,22 +379,42 @@ class RocketLander(gym.Env):
         distance = np.linalg.norm((3 * x_distance, y_distance))  # weight x position more
         speed = np.linalg.norm(vel_l)
         groundcontact = self.legs[0].ground_contact or self.legs[1].ground_contact
-        brokenleg = (self.legs[0].joint.angle < 0 or self.legs[1].joint.angle > -0) and groundcontact
+        angle_tolerance = 0.2  # Allowable deviation in degrees
+        brokenleg = ((self.legs[0].joint.angle < -angle_tolerance or self.legs[0].joint.angle > angle_tolerance) or
+                     (self.legs[1].joint.angle < -angle_tolerance or self.legs[
+                         1].joint.angle > angle_tolerance)) and groundcontact
         outside = abs(pos.x - W / 2) > W / 2 or pos.y > H
-        fuelcost = 0.1 * (0 * self.power + abs(self.force_dir)) / FPS
+        fuelcost = 10 * (0 * self.power + abs(self.force_dir)) / FPS
         landed = self.legs[0].ground_contact and self.legs[1].ground_contact and speed < 0.1
         done = False
 
+        self.fuel_used += fuelcost
+
         reward = -fuelcost
 
-        if outside or brokenleg:
+        if self.stepnumber > 12 * FPS:
             self.game_over = True
+            reward -= -10
+
+        if outside:
+            self.game_over = True
+            reward -= 10
+
+        if brokenleg:
+            self.game_over = True
+            reward = -1
 
         if self.game_over:
             done = True
+            if landed:
+                reward = 1.0
+            if not groundcontact:
+                reward -= 3
+            if groundcontact:
+                reward += 1
         else:
             # reward shaping
-            shaping = -0.5 * (distance + speed + abs(angle) ** 2)
+            shaping = -2 * (distance + speed + abs(angle) ** 2)
             shaping += 0.1 * (self.legs[0].ground_contact + self.legs[1].ground_contact)
             if self.prev_shaping is not None:
                 reward += shaping - self.prev_shaping
@@ -402,15 +425,19 @@ class RocketLander(gym.Env):
             else:
                 self.landed_ticks = 0
             if self.landed_ticks == FPS:
-                reward = 1.0
+                #reward = 1.0
                 done = True
 
         if done:
-            reward += max(-1, 0 - 2 * (speed + distance + abs(angle) + abs(vel_a)))
-        elif not groundcontact:
-            reward -= 0.25 / FPS
+            reward += max(-100, 0 - 2 * (speed + distance + 2 * abs(angle) + abs(vel_a)))
+            reward -= self.fuel_used / 100
+            # print("Episode: ", self.episode_number, "Reward: ", reward)
+            # print("Distance: ", distance, "Speed: ", speed, "Angle: ", angle, "Fuel Used: ", -self.fuel_used / 100)
+            # print("Landed: ", landed, "Broken Leg: ", brokenleg, "Outside: ", outside, "Ground Contact: ", groundcontact)
+        # elif not groundcontact:
+        #     reward -= 0.25 / FPS
 
-        reward = np.clip(reward, -1, 1)
+        # reward = np.clip(reward, -100, 1)
 
         # REWARD -------------------------------------------------------------------------------------------------------
 

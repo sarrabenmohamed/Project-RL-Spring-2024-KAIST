@@ -6,8 +6,8 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv
 
 
-CONTINUE_TRAIN = False
-MODEL_FILENAME = "test"
+CONTINUE_TRAIN = True
+MODEL_FILENAME = "VideoTraining"
 
 
 if __name__ == "__main__":
@@ -31,5 +31,5 @@ if __name__ == "__main__":
     else:
         model = PPO("MlpPolicy", env, device="cpu", policy_kwargs=policy_kwargs)
 
-    model.learn(total_timesteps=16000, progress_bar=True)
+    model.learn(total_timesteps=250*2000, progress_bar=True)
     model.save(MODEL_FILENAME)

@@ -5,7 +5,7 @@ from environment.rocket_lander import RocketLander
 
 if __name__ == "__main__":
     env = RocketLander(render_mode="human")
-    model = PPO.load("test")
+    model = PPO.load("VideoTraining.zip")
 
     obs, info = env.reset()
     while True:
