@@ -1,7 +1,7 @@
 import torch.nn as nn
 import os 
-from lunar_lander import LunarLander
-from rocket_lander import RocketLander
+
+from environment.rocket_lander import RocketLander
 from stable_baselines3 import A2C, PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
